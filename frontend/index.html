@@ -20,25 +20,25 @@
 
   <!-- BARRA SUPERIOR (Marrón cálido + Azul oscuro) -->
   <header class="bg-[#4a2e1b] text-white border-b-4 border-[#721c24] sticky top-0 z-30 shadow-md">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#1e3a8a] text-white text-2xl shadow-sm border border-blue-800" aria-hidden="true">🏠</span>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#1e3a8a] text-white text-lg sm:text-xl shadow-sm border border-blue-800" aria-hidden="true">🏠</span>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">casnoraGo</h1>
-            <span id="backendStatusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#f5efe6] text-[#4a2e1b]">Conectando...</span>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">casnoraGo</h1>
+            <span id="backendStatusBadge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#f5efe6] text-[#4a2e1b]">Conectando...</span>
           </div>
-          <p class="text-base text-[#ebd9c3] font-medium">
-            Mes actual: <span id="currentMonthLabel" class="text-white font-bold capitalize"></span>
+          <p class="text-xs sm:text-sm text-[#ebd9c3] font-medium">
+            Mes: <span id="currentMonthLabel" class="text-white font-bold capitalize"></span>
           </p>
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-wrap gap-2">
         <button
           type="button"
           id="btnOpenPagoMovil"
-          class="tap-target flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#f5efe6] hover:bg-[#eadbc8] text-[#4a2e1b] border-2 border-[#c8ab89] font-bold text-lg transition cursor-pointer"
+          class="tap-target flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#f5efe6] hover:bg-[#eadbc8] text-[#4a2e1b] border-2 border-[#c8ab89] font-bold text-sm sm:text-base transition cursor-pointer"
         >
           <span aria-hidden="true">📱</span>
           <span>Mis Pago Móvil</span>
@@ -46,81 +46,81 @@
         <button
           type="button"
           id="btnOpenNewTenant"
-          class="tap-target flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#1e3a8a] hover:bg-[#172554] text-white border-2 border-[#3b5998] font-bold text-lg shadow-md transition cursor-pointer"
+          class="tap-target flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#1e3a8a] hover:bg-[#172554] text-white border-2 border-[#3b5998] font-bold text-sm sm:text-base shadow-md transition cursor-pointer"
         >
-          <span class="text-xl" aria-hidden="true">➕</span>
+          <span class="text-base" aria-hidden="true">➕</span>
           <span>Nuevo Inquilino</span>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 pt-6 space-y-6">
+  <main class="max-w-5xl mx-auto px-3 sm:px-4 pt-4 space-y-4">
 
     <!-- RESUMEN RÁPIDO SUPERIOR -->
     <section aria-label="Resumen del mes">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3.5">
         <!-- Verde oscuro: Dólares -->
-        <div class="bg-[#edf5f0] border-2 border-[#14532d] rounded-2xl p-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <p class="text-base font-bold text-[#14532d] uppercase tracking-wide">Recaudado en Dólares</p>
-            <span class="text-2xl" aria-hidden="true">💵</span>
+        <div class="bg-[#edf5f0] border-2 border-[#14532d] rounded-xl p-3 sm:p-4 shadow-sm">
+          <div class="flex items-center justify-between gap-1">
+            <p class="text-xs sm:text-sm font-bold text-[#14532d] uppercase tracking-wide">Recaudado $</p>
+            <span class="text-lg sm:text-xl" aria-hidden="true">💵</span>
           </div>
-          <p id="totalUsdEl" class="text-3xl sm:text-4xl font-extrabold text-[#14532d] mt-2">$0.00</p>
-          <p class="text-sm text-[#1e4620] mt-1 font-medium">Total cobrado este mes en $</p>
+          <p id="totalUsdEl" class="text-2xl sm:text-3xl font-extrabold text-[#14532d] mt-1">$0.00</p>
+          <p class="text-xs text-[#1e4620] mt-0.5 font-medium">Total del mes en $</p>
         </div>
 
         <!-- Azul oscuro: Bolívares -->
-        <div class="bg-[#edf2f9] border-2 border-[#1e3a8a] rounded-2xl p-5 shadow-sm">
-          <div class="flex items-center justify-between">
-            <p class="text-base font-bold text-[#1e3a8a] uppercase tracking-wide">Recaudado en Bolívares</p>
-            <span class="text-2xl" aria-hidden="true">🇻🇪</span>
+        <div class="bg-[#edf2f9] border-2 border-[#1e3a8a] rounded-xl p-3 sm:p-4 shadow-sm">
+          <div class="flex items-center justify-between gap-1">
+            <p class="text-xs sm:text-sm font-bold text-[#1e3a8a] uppercase tracking-wide">Recaudado Bs</p>
+            <span class="text-lg sm:text-xl" aria-hidden="true">🇻🇪</span>
           </div>
-          <p id="totalBsEl" class="text-3xl sm:text-4xl font-extrabold text-[#172554] mt-2">Bs. 0,00</p>
-          <p class="text-sm text-[#1e3a8a] mt-1 font-medium">Total cobrado este mes en Bs</p>
+          <p id="totalBsEl" class="text-2xl sm:text-3xl font-extrabold text-[#172554] mt-1">Bs. 0,00</p>
+          <p class="text-xs text-[#1e3a8a] mt-0.5 font-medium">Total del mes en Bs</p>
         </div>
 
         <!-- Vinotinto: Faltan por pagar -->
-        <div id="pendingSummaryCard" class="bg-[#faecee] border-2 border-[#721c24] rounded-2xl p-5 shadow-sm transition-colors">
-          <div class="flex items-center justify-between">
-            <p id="pendingSummaryTitle" class="text-base font-bold text-[#721c24] uppercase tracking-wide">Faltan por Pagar</p>
-            <span id="pendingSummaryIcon" class="text-2xl" aria-hidden="true">⏳</span>
+        <div id="pendingSummaryCard" class="col-span-2 md:col-span-1 bg-[#faecee] border-2 border-[#721c24] rounded-xl p-3 sm:p-4 shadow-sm transition-colors">
+          <div class="flex items-center justify-between gap-1">
+            <p id="pendingSummaryTitle" class="text-xs sm:text-sm font-bold text-[#721c24] uppercase tracking-wide">Faltan por Pagar</p>
+            <span id="pendingSummaryIcon" class="text-lg sm:text-xl" aria-hidden="true">⏳</span>
           </div>
-          <p id="pendingCountEl" class="text-3xl sm:text-4xl font-extrabold text-[#6b1426] mt-2">0</p>
-          <p id="pendingSubtextEl" class="text-sm text-[#721c24] mt-1 font-medium">De 0 inquilinos registrados</p>
+          <p id="pendingCountEl" class="text-2xl sm:text-3xl font-extrabold text-[#6b1426] mt-1">0</p>
+          <p id="pendingSubtextEl" class="text-xs text-[#721c24] mt-0.5 font-medium">De 0 inquilinos registrados</p>
         </div>
       </div>
     </section>
 
     <!-- SECCIÓN DE PAGO MÓVIL Y SORTEO EQUITATIVO -->
-    <section aria-label="Gestión y sorteo de Pago Móvil" class="bg-white border-2 border-[#b69574] rounded-2xl p-5 sm:p-6 shadow-sm">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-        <div class="space-y-2 flex-1">
+    <section aria-label="Gestión y sorteo de Pago Móvil" class="bg-white border-2 border-[#b69574] rounded-xl p-3.5 sm:p-5 shadow-sm">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5">
+        <div class="space-y-1.5 flex-1">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="px-3 py-1 rounded-full bg-[#1e3a8a] text-white font-bold text-sm uppercase tracking-wide">
-              Pago Móvil para el cobro actual
+            <span class="px-2.5 py-0.5 rounded-full bg-[#1e3a8a] text-white font-bold text-xs uppercase tracking-wide">
+              Pago Móvil actual
             </span>
-            <span id="pmUsageBadge" class="px-3 py-1 rounded-full bg-[#f5efe6] text-[#4a2e1b] border border-[#c8ab89] font-semibold text-sm"></span>
+            <span id="pmUsageBadge" class="px-2.5 py-0.5 rounded-full bg-[#f5efe6] text-[#4a2e1b] border border-[#c8ab89] font-semibold text-xs"></span>
           </div>
 
-          <div id="activePagoMovilBox" class="pt-1"></div>
+          <div id="activePagoMovilBox" class="pt-0.5"></div>
         </div>
 
-        <div class="flex flex-col sm:flex-row lg:flex-col gap-3 lg:w-72">
+        <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 lg:w-64">
           <button
             type="button"
             id="btnSortearPM"
-            class="tap-target inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#1e3a8a] hover:bg-[#172554] text-white font-bold text-lg shadow-md transition cursor-pointer"
+            class="tap-target inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1e3a8a] hover:bg-[#172554] text-white font-bold text-sm sm:text-base shadow-md transition cursor-pointer"
           >
             <span id="diceIcon" aria-hidden="true">🎲</span>
             <span>Sugerir / Sortear Pago Móvil</span>
           </button>
 
           <div class="flex flex-col gap-1">
-            <label for="pmQuickSelect" class="text-sm font-bold text-[#4a2e1b]">O elegir otra cuenta manualmente:</label>
+            <label for="pmQuickSelect" class="text-xs font-bold text-[#4a2e1b]">O elegir otra cuenta:</label>
             <select
               id="pmQuickSelect"
-              class="tap-target w-full px-4 py-2.5 rounded-xl border-2 border-[#b69574] bg-[#faf6f0] text-[#2c1b10] font-semibold text-base"
+              class="tap-target w-full px-3 py-2 rounded-xl border-2 border-[#b69574] bg-[#faf6f0] text-[#2c1b10] font-semibold text-sm"
             ></select>
           </div>
         </div>
@@ -128,32 +128,32 @@
     </section>
 
     <!-- FILTROS Y BÚSQUEDA DE INQUILINOS -->
-    <section aria-label="Lista de inquilinos" class="space-y-4">
-      <div class="bg-white border-2 border-[#b69574] rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <section aria-label="Lista de inquilinos" class="space-y-3">
+      <div class="bg-white border-2 border-[#b69574] rounded-xl p-3 sm:p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div class="flex-1">
           <label for="searchTenant" class="sr-only">Buscar inquilino o habitación</label>
           <input
             type="search"
             id="searchTenant"
             placeholder="🔍 Buscar por nombre o habitación..."
-            class="tap-target w-full px-4 py-3 rounded-xl border-2 border-[#b69574] bg-[#faf6f0] text-lg font-medium placeholder:text-[#8c6b4f]"
+            class="tap-target w-full px-3.5 py-2 rounded-xl border-2 border-[#b69574] bg-[#faf6f0] text-sm sm:text-base font-medium placeholder:text-[#8c6b4f]"
           />
         </div>
 
-        <div class="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
-          <button type="button" data-filter="todos" class="filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 transition cursor-pointer">
+        <div class="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por estado">
+          <button type="button" data-filter="todos" class="filter-btn tap-target px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm border-2 transition cursor-pointer">
             Todos
           </button>
-          <button type="button" data-filter="pendientes" class="filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 transition cursor-pointer">
+          <button type="button" data-filter="pendientes" class="filter-btn tap-target px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm border-2 transition cursor-pointer">
             Faltan por pagar
           </button>
-          <button type="button" data-filter="pagado" class="filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 transition cursor-pointer">
+          <button type="button" data-filter="pagado" class="filter-btn tap-target px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm border-2 transition cursor-pointer">
             Pagados
           </button>
         </div>
       </div>
 
-      <div id="tenantsList" class="space-y-4"></div>
+      <div id="tenantsList" class="space-y-3"></div>
     </section>
   </main>
 

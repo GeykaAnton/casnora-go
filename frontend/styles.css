@@ -1,6 +1,12 @@
 /* Estilos personalizados para casnoraGo (Paleta: Marrón, Vinotinto, Azul Oscuro, Verde Oscuro) */
 html {
-  font-size: 16px;
+  font-size: 14px;
+}
+
+@media (min-width: 640px) {
+  html {
+    font-size: 15px;
+  }
 }
 
 body {
@@ -15,13 +21,13 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 4px solid #1e3a8a;
+  outline: 3px solid #1e3a8a;
   outline-offset: 2px;
 }
 
-/* Áreas táctiles amplias para botones */
+/* Áreas táctiles cómodas sin ocupar demasiado espacio */
 .tap-target {
-  min-height: 48px;
+  min-height: 40px;
 }
 
 /* Animación suave para modales */

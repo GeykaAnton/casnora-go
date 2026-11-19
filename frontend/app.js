@@ -218,18 +218,18 @@
     badge.textContent = uses === 1 ? 'Usada 1 vez' : `Usada ${uses} veces`;
 
     box.innerHTML = `
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#faf6f0] border-2 border-[#c8ab89] rounded-xl p-4">
-        <div class="space-y-1">
-          <p class="text-xl sm:text-2xl font-extrabold text-[#2c1b10]">${escapeHtml(active.bank)}</p>
-          <p class="text-lg font-bold text-[#1e3a8a]">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#faf6f0] border-2 border-[#c8ab89] rounded-xl p-3">
+        <div class="space-y-0.5">
+          <p class="text-base sm:text-xl font-extrabold text-[#2c1b10]">${escapeHtml(active.bank)}</p>
+          <p class="text-sm sm:text-base font-bold text-[#1e3a8a]">
             📞 ${escapeHtml(active.phone)} &nbsp;|&nbsp; 🪪 ${escapeHtml(active.docId)}
           </p>
-          ${active.holder ? `<p class="text-base text-[#5c3a21] font-medium">Titular: ${escapeHtml(active.holder)}</p>` : ''}
+          ${active.holder ? `<p class="text-xs sm:text-sm text-[#5c3a21] font-medium">Titular: ${escapeHtml(active.holder)}</p>` : ''}
         </div>
         <button
           type="button"
           id="btnCopyActivePM"
-          class="tap-target px-4 py-2.5 rounded-xl bg-white hover:bg-[#edf2f9] text-[#1e3a8a] border-2 border-[#1e3a8a] font-bold text-base shadow-sm cursor-pointer shrink-0"
+          class="tap-target px-3.5 py-2 rounded-xl bg-white hover:bg-[#edf2f9] text-[#1e3a8a] border-2 border-[#1e3a8a] font-bold text-sm shadow-sm cursor-pointer shrink-0"
         >
           📋 Copiar datos
         </button>
@@ -261,9 +261,9 @@
     document.querySelectorAll('.filter-btn').forEach((btn) => {
       const isSelected = btn.dataset.filter === currentFilter;
       if (isSelected) {
-        btn.className = 'filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 border-[#1e3a8a] bg-[#1e3a8a] text-white transition cursor-pointer';
+        btn.className = 'filter-btn tap-target px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm border-2 border-[#1e3a8a] bg-[#1e3a8a] text-white transition cursor-pointer';
       } else {
-        btn.className = 'filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 border-[#b69574] bg-white hover:bg-[#f5efe6] text-[#4a2e1b] transition cursor-pointer';
+        btn.className = 'filter-btn tap-target px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm border-2 border-[#b69574] bg-white hover:bg-[#f5efe6] text-[#4a2e1b] transition cursor-pointer';
       }
     });
   }
@@ -320,13 +320,13 @@
         let badgeHtml = '';
         let cardBorder = 'border-[#b69574]';
         if (status === 'pagado') {
-          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#14532d] text-white font-extrabold text-base">✅ Pagado</span>`;
+          badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#14532d] text-white font-extrabold text-xs sm:text-sm">✅ Pagado</span>`;
           cardBorder = 'border-[#14532d]';
         } else if (status === 'atrasado') {
-          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#721c24] text-white font-extrabold text-base">⚠️ Atrasado</span>`;
+          badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#721c24] text-white font-extrabold text-xs sm:text-sm">⚠️ Atrasado</span>`;
           cardBorder = 'border-[#721c24]';
         } else {
-          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#7c4d2b] text-white font-extrabold text-base">⏳ Pendiente</span>`;
+          badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#7c4d2b] text-white font-extrabold text-xs sm:text-sm">⏳ Pendiente</span>`;
           cardBorder = 'border-[#7c4d2b]';
         }
 
@@ -334,46 +334,46 @@
         const paymentDetailHtml =
           monthPayments.length > 0
             ? `
-              <div class="mt-3 bg-[#edf5f0] border border-[#14532d] rounded-xl p-3 text-base text-[#14532d] space-y-1">
+              <div class="mt-2 bg-[#edf5f0] border border-[#14532d] rounded-xl p-2.5 text-sm text-[#14532d] space-y-0.5">
                 <p class="font-bold">
                   Pagado este mes:
                   ${totalPaidUsd > 0 ? `<span class="text-[#14532d]">${formatUsd(totalPaidUsd)}</span>` : ''}
                   ${totalPaidUsd > 0 && totalPaidBs > 0 ? ' + ' : ''}
                   ${totalPaidBs > 0 ? `<span class="text-[#1e3a8a]">${formatBs(totalPaidBs)}</span>` : ''}
                 </p>
-                ${lastPayment?.accountLabel ? `<p class="text-sm font-semibold text-[#4a2e1b]">Cuenta: ${escapeHtml(lastPayment.accountLabel)}</p>` : ''}
-                ${lastPayment?.note ? `<p class="text-sm text-[#5c3a21]">Nota: ${escapeHtml(lastPayment.note)}</p>` : ''}
+                ${lastPayment?.accountLabel ? `<p class="text-xs font-semibold text-[#4a2e1b]">Cuenta: ${escapeHtml(lastPayment.accountLabel)}</p>` : ''}
+                ${lastPayment?.note ? `<p class="text-xs text-[#5c3a21]">Nota: ${escapeHtml(lastPayment.note)}</p>` : ''}
               </div>
             `
             : '';
 
         return `
-          <article class="bg-white border-2 ${cardBorder} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="space-y-1.5 flex-1">
-              <div class="flex flex-wrap items-center gap-3">
-                <h3 class="text-2xl font-extrabold text-[#2c1b10]">${escapeHtml(tenant.name)}</h3>
+          <article class="bg-white border-2 ${cardBorder} rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="space-y-1 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-extrabold text-[#2c1b10]">${escapeHtml(tenant.name)}</h3>
                 ${badgeHtml}
               </div>
 
-              <div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-lg text-[#4a2e1b] font-semibold">
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm sm:text-base text-[#4a2e1b] font-semibold">
                 <span>🚪 ${escapeHtml(tenant.room)}</span>
-                <span>📅 Día de pago: <strong class="text-[#2c1b10]">${escapeHtml(tenant.dueDay)}</strong> de cada mes</span>
+                <span>📅 Día: <strong class="text-[#2c1b10]">${escapeHtml(tenant.dueDay)}</strong></span>
                 ${tenant.rentUsd ? `<span>💵 Canon: <strong class="text-[#14532d]">${formatUsd(tenant.rentUsd)}</strong></span>` : ''}
               </div>
 
               ${paymentDetailHtml}
             </div>
 
-            <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0">
+            <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
               <button
                 type="button"
                 data-action="pay"
                 data-id="${escapeHtml(tenant.id)}"
-                class="tap-target flex-1 sm:flex-none px-5 py-3 rounded-xl ${
+                class="tap-target flex-1 sm:flex-none px-4 py-2 rounded-xl ${
                   status === 'pagado'
                     ? 'bg-[#14532d] hover:bg-[#0f3f22]'
                     : 'bg-[#1e3a8a] hover:bg-[#172554]'
-                } text-white font-bold text-lg shadow-sm cursor-pointer"
+                } text-white font-bold text-sm sm:text-base shadow-sm cursor-pointer"
               >
                 ${status === 'pagado' ? '➕ Otro Abono' : '💵 Registrar Pago'}
               </button>
@@ -384,7 +384,7 @@
                       type="button"
                       data-action="undo-pay"
                       data-id="${escapeHtml(tenant.id)}"
-                      class="tap-target px-4 py-3 rounded-xl bg-[#faecee] hover:bg-[#f3d6da] text-[#721c24] border-2 border-[#721c24] font-bold text-base cursor-pointer"
+                      class="tap-target px-3 py-2 rounded-xl bg-[#faecee] hover:bg-[#f3d6da] text-[#721c24] border-2 border-[#721c24] font-bold text-xs sm:text-sm cursor-pointer"
                       title="Anular pagos de este mes"
                     >
                       ↩️ Anular
@@ -396,7 +396,7 @@
                 type="button"
                 data-action="edit"
                 data-id="${escapeHtml(tenant.id)}"
-                class="tap-target px-4 py-3 rounded-xl bg-[#f5efe6] hover:bg-[#eadbc8] text-[#4a2e1b] border border-[#c8ab89] font-bold text-base cursor-pointer"
+                class="tap-target px-3 py-2 rounded-xl bg-[#f5efe6] hover:bg-[#eadbc8] text-[#4a2e1b] border border-[#c8ab89] font-bold text-xs sm:text-sm cursor-pointer"
                 aria-label="Editar inquilino ${escapeHtml(tenant.name)}"
               >
                 ✏️ Editar
@@ -406,7 +406,7 @@
                 type="button"
                 data-action="delete"
                 data-id="${escapeHtml(tenant.id)}"
-                class="tap-target px-4 py-3 rounded-xl bg-[#faecee] hover:bg-[#f3d6da] text-[#721c24] border border-[#721c24] font-bold text-base cursor-pointer"
+                class="tap-target px-3 py-2 rounded-xl bg-[#faecee] hover:bg-[#f3d6da] text-[#721c24] border border-[#721c24] font-bold text-xs sm:text-sm cursor-pointer"
                 aria-label="Eliminar inquilino ${escapeHtml(tenant.name)}"
               >
                 🗑️
