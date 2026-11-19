@@ -22,10 +22,10 @@
     const badge = document.getElementById('backendStatusBadge');
     if (!badge) return;
     if (ok) {
-      badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+      badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#14532d] text-white border border-[#1e6b3b]';
       badge.textContent = text || '● En línea';
     } else {
-      badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300';
+      badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#721c24] text-white border border-[#9b2c36]';
       badge.textContent = text || '● Sin conexión';
     }
   }
@@ -128,9 +128,9 @@
   function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     const colors = {
-      success: 'bg-emerald-600',
-      error: 'bg-red-600',
-      info: 'bg-slate-800',
+      success: 'bg-[#14532d]',
+      error: 'bg-[#721c24]',
+      info: 'bg-[#4a2e1b]',
     };
     toast.className = `fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-6 py-3.5 rounded-2xl shadow-xl font-bold text-lg text-white ${colors[type] || colors.info}`;
     toast.textContent = message;
@@ -178,16 +178,16 @@
     const icon = document.getElementById('pendingSummaryIcon');
 
     if (totalTenants > 0 && pendingCount === 0) {
-      card.className = 'bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 shadow-sm transition-colors';
-      title.className = 'text-base font-bold text-emerald-900 uppercase tracking-wide';
-      countEl.className = 'text-3xl sm:text-4xl font-extrabold text-emerald-700 mt-2';
-      subtext.className = 'text-sm text-emerald-800 mt-1 font-medium';
+      card.className = 'bg-[#edf5f0] border-2 border-[#14532d] rounded-2xl p-5 shadow-sm transition-colors';
+      title.className = 'text-base font-bold text-[#14532d] uppercase tracking-wide';
+      countEl.className = 'text-3xl sm:text-4xl font-extrabold text-[#14532d] mt-2';
+      subtext.className = 'text-sm text-[#1e4620] mt-1 font-medium';
       icon.textContent = '🎉';
     } else {
-      card.className = 'bg-red-50 border-2 border-red-300 rounded-2xl p-5 shadow-sm transition-colors';
-      title.className = 'text-base font-bold text-red-900 uppercase tracking-wide';
-      countEl.className = 'text-3xl sm:text-4xl font-extrabold text-red-700 mt-2';
-      subtext.className = 'text-sm text-red-800 mt-1 font-medium';
+      card.className = 'bg-[#faecee] border-2 border-[#721c24] rounded-2xl p-5 shadow-sm transition-colors';
+      title.className = 'text-base font-bold text-[#721c24] uppercase tracking-wide';
+      countEl.className = 'text-3xl sm:text-4xl font-extrabold text-[#6b1426] mt-2';
+      subtext.className = 'text-sm text-[#721c24] mt-1 font-medium';
       icon.textContent = '⏳';
     }
   }
@@ -218,18 +218,18 @@
     badge.textContent = uses === 1 ? 'Usada 1 vez' : `Usada ${uses} veces`;
 
     box.innerHTML = `
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 border-2 border-slate-200 rounded-xl p-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#faf6f0] border-2 border-[#c8ab89] rounded-xl p-4">
         <div class="space-y-1">
-          <p class="text-xl sm:text-2xl font-extrabold text-slate-900">${escapeHtml(active.bank)}</p>
-          <p class="text-lg font-bold text-blue-700">
+          <p class="text-xl sm:text-2xl font-extrabold text-[#2c1b10]">${escapeHtml(active.bank)}</p>
+          <p class="text-lg font-bold text-[#1e3a8a]">
             📞 ${escapeHtml(active.phone)} &nbsp;|&nbsp; 🪪 ${escapeHtml(active.docId)}
           </p>
-          ${active.holder ? `<p class="text-base text-slate-600 font-medium">Titular: ${escapeHtml(active.holder)}</p>` : ''}
+          ${active.holder ? `<p class="text-base text-[#5c3a21] font-medium">Titular: ${escapeHtml(active.holder)}</p>` : ''}
         </div>
         <button
           type="button"
           id="btnCopyActivePM"
-          class="tap-target px-4 py-2.5 rounded-xl bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 font-bold text-base shadow-sm cursor-pointer shrink-0"
+          class="tap-target px-4 py-2.5 rounded-xl bg-white hover:bg-[#edf2f9] text-[#1e3a8a] border-2 border-[#1e3a8a] font-bold text-base shadow-sm cursor-pointer shrink-0"
         >
           📋 Copiar datos
         </button>
@@ -261,9 +261,9 @@
     document.querySelectorAll('.filter-btn').forEach((btn) => {
       const isSelected = btn.dataset.filter === currentFilter;
       if (isSelected) {
-        btn.className = 'filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 border-blue-600 bg-blue-600 text-white transition cursor-pointer';
+        btn.className = 'filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 border-[#1e3a8a] bg-[#1e3a8a] text-white transition cursor-pointer';
       } else {
-        btn.className = 'filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 border-slate-300 bg-white hover:bg-slate-100 text-slate-700 transition cursor-pointer';
+        btn.className = 'filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 border-[#b69574] bg-white hover:bg-[#f5efe6] text-[#4a2e1b] transition cursor-pointer';
       }
     });
   }
@@ -318,31 +318,31 @@
         const totalPaidBs = monthPayments.reduce((s, p) => s + (Number(p.bs) || 0), 0);
 
         let badgeHtml = '';
-        let cardBorder = 'border-slate-200';
+        let cardBorder = 'border-[#b69574]';
         if (status === 'pagado') {
-          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold text-base">✅ Pagado</span>`;
-          cardBorder = 'border-emerald-300';
+          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#14532d] text-white font-extrabold text-base">✅ Pagado</span>`;
+          cardBorder = 'border-[#14532d]';
         } else if (status === 'atrasado') {
-          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-red-100 text-red-800 border border-red-300 font-extrabold text-base">⚠️ Atrasado</span>`;
-          cardBorder = 'border-red-300';
+          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#721c24] text-white font-extrabold text-base">⚠️ Atrasado</span>`;
+          cardBorder = 'border-[#721c24]';
         } else {
-          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-base">⏳ Pendiente</span>`;
-          cardBorder = 'border-amber-300';
+          badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#7c4d2b] text-white font-extrabold text-base">⏳ Pendiente</span>`;
+          cardBorder = 'border-[#7c4d2b]';
         }
 
         const lastPayment = monthPayments[monthPayments.length - 1];
         const paymentDetailHtml =
           monthPayments.length > 0
             ? `
-              <div class="mt-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-base text-emerald-900 space-y-1">
+              <div class="mt-3 bg-[#edf5f0] border border-[#14532d] rounded-xl p-3 text-base text-[#14532d] space-y-1">
                 <p class="font-bold">
                   Pagado este mes:
-                  ${totalPaidUsd > 0 ? `<span class="text-emerald-800">${formatUsd(totalPaidUsd)}</span>` : ''}
+                  ${totalPaidUsd > 0 ? `<span class="text-[#14532d]">${formatUsd(totalPaidUsd)}</span>` : ''}
                   ${totalPaidUsd > 0 && totalPaidBs > 0 ? ' + ' : ''}
-                  ${totalPaidBs > 0 ? `<span class="text-blue-800">${formatBs(totalPaidBs)}</span>` : ''}
+                  ${totalPaidBs > 0 ? `<span class="text-[#1e3a8a]">${formatBs(totalPaidBs)}</span>` : ''}
                 </p>
-                ${lastPayment?.accountLabel ? `<p class="text-sm font-semibold text-slate-700">Cuenta: ${escapeHtml(lastPayment.accountLabel)}</p>` : ''}
-                ${lastPayment?.note ? `<p class="text-sm text-slate-600">Nota: ${escapeHtml(lastPayment.note)}</p>` : ''}
+                ${lastPayment?.accountLabel ? `<p class="text-sm font-semibold text-[#4a2e1b]">Cuenta: ${escapeHtml(lastPayment.accountLabel)}</p>` : ''}
+                ${lastPayment?.note ? `<p class="text-sm text-[#5c3a21]">Nota: ${escapeHtml(lastPayment.note)}</p>` : ''}
               </div>
             `
             : '';
@@ -351,14 +351,14 @@
           <article class="bg-white border-2 ${cardBorder} rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="space-y-1.5 flex-1">
               <div class="flex flex-wrap items-center gap-3">
-                <h3 class="text-2xl font-extrabold text-slate-900">${escapeHtml(tenant.name)}</h3>
+                <h3 class="text-2xl font-extrabold text-[#2c1b10]">${escapeHtml(tenant.name)}</h3>
                 ${badgeHtml}
               </div>
 
-              <div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-lg text-slate-700 font-semibold">
+              <div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-lg text-[#4a2e1b] font-semibold">
                 <span>🚪 ${escapeHtml(tenant.room)}</span>
-                <span>📅 Día de pago: <strong class="text-slate-900">${escapeHtml(tenant.dueDay)}</strong> de cada mes</span>
-                ${tenant.rentUsd ? `<span>💵 Canon: <strong class="text-slate-900">${formatUsd(tenant.rentUsd)}</strong></span>` : ''}
+                <span>📅 Día de pago: <strong class="text-[#2c1b10]">${escapeHtml(tenant.dueDay)}</strong> de cada mes</span>
+                ${tenant.rentUsd ? `<span>💵 Canon: <strong class="text-[#14532d]">${formatUsd(tenant.rentUsd)}</strong></span>` : ''}
               </div>
 
               ${paymentDetailHtml}
@@ -371,8 +371,8 @@
                 data-id="${escapeHtml(tenant.id)}"
                 class="tap-target flex-1 sm:flex-none px-5 py-3 rounded-xl ${
                   status === 'pagado'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-blue-600 hover:bg-blue-700'
+                    ? 'bg-[#14532d] hover:bg-[#0f3f22]'
+                    : 'bg-[#1e3a8a] hover:bg-[#172554]'
                 } text-white font-bold text-lg shadow-sm cursor-pointer"
               >
                 ${status === 'pagado' ? '➕ Otro Abono' : '💵 Registrar Pago'}
@@ -384,7 +384,7 @@
                       type="button"
                       data-action="undo-pay"
                       data-id="${escapeHtml(tenant.id)}"
-                      class="tap-target px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-200 font-bold text-base cursor-pointer"
+                      class="tap-target px-4 py-3 rounded-xl bg-[#faecee] hover:bg-[#f3d6da] text-[#721c24] border-2 border-[#721c24] font-bold text-base cursor-pointer"
                       title="Anular pagos de este mes"
                     >
                       ↩️ Anular
@@ -396,7 +396,7 @@
                 type="button"
                 data-action="edit"
                 data-id="${escapeHtml(tenant.id)}"
-                class="tap-target px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-base cursor-pointer"
+                class="tap-target px-4 py-3 rounded-xl bg-[#f5efe6] hover:bg-[#eadbc8] text-[#4a2e1b] border border-[#c8ab89] font-bold text-base cursor-pointer"
                 aria-label="Editar inquilino ${escapeHtml(tenant.name)}"
               >
                 ✏️ Editar
@@ -406,7 +406,7 @@
                 type="button"
                 data-action="delete"
                 data-id="${escapeHtml(tenant.id)}"
-                class="tap-target px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-base cursor-pointer"
+                class="tap-target px-4 py-3 rounded-xl bg-[#faecee] hover:bg-[#f3d6da] text-[#721c24] border border-[#721c24] font-bold text-base cursor-pointer"
                 aria-label="Eliminar inquilino ${escapeHtml(tenant.name)}"
               >
                 🗑️
