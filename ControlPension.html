@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ControlPensión App</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html { font-size: 18px; }
+  body { -webkit-tap-highlight-color: transparent; }
+  input, select, textarea { font-size: 1.15rem !important; }
+  .modal-bg { background: rgba(15, 23, 42, .65); }
+  @keyframes pop { from { transform: scale(.94); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  .pop { animation: pop .18s ease-out; }
+  @keyframes shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-12deg)} 75%{transform:rotate(12deg)} }
+  .dado { display:inline-block; animation: shake .25s infinite; }
+  .campo { width:100%; border:2px solid #cbd5e1; border-radius:.9rem; padding:.85rem 1rem; background:#fff; }
+  .campo:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 4px rgba(37,99,235,.2); }
+  .etq { display:block; font-weight:700; font-size:1.05rem; margin-bottom:.35rem; color:#1e293b; }
+</style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen pb-36">
+
+  <!-- ENCABEZADO -->
+  <header class="bg-blue-700 text-white shadow-lg">
+    <div class="max-w-3xl mx-auto px-4 pt-4 pb-5">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-center">🏠 ControlPensión</h1>
+      <div class="flex items-center justify-between gap-2 mt-3">
+        <button onclick="cambiarMes(-1)" class="bg-blue-900/60 hover:bg-blue-900 rounded-2xl w-14 h-14 text-2xl font-bold" aria-label="Mes anterior">◀</button>
+        <div class="text-center">
+          <div id="mesTitulo" class="text-2xl font-bold"></div>
+          <button id="btnHoy" onclick="irMesActual()" class="hidden text-base underline text-blue-100 mt-1">Volver al mes actual</button>
+        </div>
+        <button onclick="cambiarMes(1)" class="bg-blue-900/60 hover:bg-blue-900 rounded-2xl w-14 h-14 text-2xl font-bold" aria-label="Mes siguiente">▶</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4">
+    <!-- RESUMEN -->
+    <section id="resumen" class="grid grid-cols-1 sm:grid-cols-3 gap-3 -mt-1 pt-4"></section>
+
+    <!-- CONTENIDO DE LA PESTAÑA -->
+    <section id="contenido" class="mt-5"></section>
+  </main>
+
+  <!-- MENÚ INFERIOR -->
+  <nav class="fixed bottom-0 inset-x-0 bg-white border-t-2 border-slate-200 shadow-2xl z-30">
+    <div class="max-w-3xl mx-auto grid grid-cols-3">
+      <button data-tab="inquilinos" onclick="irTab('inquilinos')" class="tabbtn py-3 flex flex-col items-center font-bold text-lg"><span class="text-3xl">👥</span>Inquilinos</button>
+      <button data-tab="pagos" onclick="irTab('pagos')" class="tabbtn py-3 flex flex-col items-center font-bold text-lg"><span class="text-3xl">💵</span>Pagos</button>
+      <button data-tab="cuentas" onclick="irTab('cuentas')" class="tabbtn py-3 flex flex-col items-center font-bold text-lg"><span class="text-3xl">🏦</span>Pago Móvil</button>
+    </div>
+  </nav>
+
+  <!-- VENTANAS -->
+  <div id="modal" class="hidden fixed inset-0 modal-bg z-40 overflow-y-auto"></div>
+  <div id="confirmar" class="hidden fixed inset-0 modal-bg z-50 flex items-center justify-center p-4"></div>
+  <div id="toast" class="hidden fixed top-4 inset-x-4 z-[60] flex justify-center pointer-events-none"></div>
+
+<script>
+/* =========================================================
+   DATOS
+   ========================================================= */
+const CLAVE = 'controlPension_v1';
+const VACIO = () => ({ inquilinos: [], cuentas: [], pagos: [], ultimaTasa: '', ultimaCuentaId: null });
+let S = cargar();
+
+function cargar() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CLAVE));
+    if (d && Array.isArray(d.inquilinos)) return Object.assign(VACIO(), d);
+  } catch (e) {}
+  return VACIO();
+}
+function guardar() {
+  try { localStorage.setItem(CLAVE, JSON.stringify(S)); }
+  catch (e) { aviso('⚠️ No se pudo guardar en este navegador', 'rojo'); }
+}
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const BANCOS = ['Banco de Venezuela (0102)','Banesco (0134)','Mercantil (0105)','BBVA Provincial (0108)','Bicentenario (0175)',
+  'BNC Nacional de Crédito (0191)','Banco del Tesoro (0163)','Bancamiga (0172)','Venezolano de Crédito (0104)','Banco Exterior (0115)',
+  'Banplus (0174)','Banco Plaza (0138)','Bancaribe (0114)','Banco Activo (0171)','Banco Caroní (0128)','Sofitasa (0137)','100% Banco (0156)','Banfanb (0177)'];
+
+const hoy = new Date();
+let vista = { y: hoy.getFullYear(), m: hoy.getMonth() };
+let tab = 'inquilinos';
+let pagoSel = { cuentaId: null };
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const $ = id => document.getElementById(id);
+const val = id => ($(id) ? $(id).value.trim() : '');
+const periodoDe = (y, m) => `${y}-${String(m + 1).padStart(2, '0')}`;
+const periodoVista = () => periodoDe(vista.y, vista.m);
+const periodoActual = () => periodoDe(hoy.getFullYear(), hoy.getMonth());
+const periodoTexto = p => { const [y, m] = p.split('-'); return `${MESES[+m - 1]} ${y}`; };
+const fmt = n => Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fechaCorta = iso => { const d = new Date(iso); return d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }); };
+const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+
+// Acepta "1.234,56", "1234.56", "1.500" (mil quinientos), "35"
+function num(v) {
+  v = String(v || '').trim().replace(/\s/g, '').replace(/[^\d.,-]/g, '');
+  if (!v) return 0;
+  if (v.includes(',')) v = v.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, '');
+  const n = parseFloat(v);
+  return isFinite(n) && n > 0 ? n : 0;
+}
+
+function nombreCuenta(c) { return c ? `${c.banco} · ${c.telefono}` : ''; }
+function cuentaPorId(id) { return S.cuentas.find(c => c.id === id); }
+function inquilinoPorId(id) { return S.inquilinos.find(i => i.id === id); }
+
+/* =========================================================
+   ESTADO DE PAGO
+   ========================================================= */
+function pagosDe(inqId, p) { return S.pagos.filter(x => x.inquilinoId === inqId && x.periodo === p); }
+
+function diaCorte(inq, p) {
+  const [y, m] = p.split('-').map(Number);
+  const ultimo = new Date(y, m, 0).getDate();
+  return Math.min(Number(inq.diaPago) || 1, ultimo);
+}
+
+function estado(inq, p) {
+  if (pagosDe(inq.id, p).length) return 'pagado';
+  const act = periodoActual();
+  if (p < act) return 'atrasado';
+  if (p > act) return 'pendiente';
+  return hoy.getDate() > diaCorte(inq, p) ? 'atrasado' : 'pendiente';
+}
+
+function inquilinosDelMes(p) {
+  // Solo cuenta inquilinos que ya existían en ese mes
+  return S.inquilinos.filter(i => !i.desde || i.desde <= p);
+}
+
+/* =========================================================
+   PINTAR PANTALLA
+   ========================================================= */
+function render() {
+  const p = periodoVista();
+  $('mesTitulo').textContent = periodoTexto(p);
+  $('btnHoy').classList.toggle('hidden', p === periodoActual());
+  document.querySelectorAll('.tabbtn').forEach(b => {
+    const on = b.dataset.tab === tab;
+    b.className = 'tabbtn py-3 flex flex-col items-center font-bold text-lg ' + (on ? 'text-blue-700 bg-blue-50 border-t-4 border-blue-700' : 'text-slate-500 border-t-4 border-transparent');
+  });
+  pintarResumen();
+  if (tab === 'inquilinos') pintarInquilinos();
+  if (tab === 'pagos') pintarPagos();
+  if (tab === 'cuentas') pintarCuentas();
+}
+
+function pintarResumen() {
+  const p = periodoVista();
+  const pagos = S.pagos.filter(x => x.periodo === p);
+  const totUsd = pagos.reduce((a, x) => a + (x.usd || 0), 0);
+  const totBs = pagos.reduce((a, x) => a + (x.bs || 0), 0);
+  const lista = inquilinosDelMes(p);
+  const faltan = lista.filter(i => estado(i, p) !== 'pagado').length;
+  const atrasados = lista.filter(i => estado(i, p) === 'atrasado').length;
+
+  $('resumen').innerHTML = `
+    <div class="bg-white rounded-3xl shadow p-4 border-l-8 border-green-600">
+      <div class="text-slate-600 font-semibold">Cobrado en dólares</div>
+      <div class="text-3xl font-extrabold text-green-700">$ ${fmt(totUsd)}</div>
+    </div>
+    <div class="bg-white rounded-3xl shadow p-4 border-l-8 border-green-600">
+      <div class="text-slate-600 font-semibold">Cobrado en bolívares</div>
+      <div class="text-3xl font-extrabold text-green-700">Bs ${fmt(totBs)}</div>
+    </div>
+    <div class="bg-white rounded-3xl shadow p-4 border-l-8 ${faltan ? 'border-red-600' : 'border-green-600'}">
+      <div class="text-slate-600 font-semibold">Faltan por pagar</div>
+      <div class="text-3xl font-extrabold ${faltan ? 'text-red-600' : 'text-green-700'}">${faltan} <span class="text-xl font-bold text-slate-500">de ${lista.length}</span></div>
+      ${atrasados ? `<div class="text-red-600 font-bold">${atrasados} atrasado${atrasados > 1 ? 's' : ''}</div>` : (lista.length && !faltan ? '<div class="text-green-700 font-bold">¡Todos pagaron! 🎉</div>' : '')}
+    </div>`;
+}
+
+const ESTILO = {
+  pagado:    { txt: '✅ PAGADO',    caja: 'bg-green-600 text-white', borde: 'border-green-500' },
+  pendiente: { txt: '⏳ PENDIENTE', caja: 'bg-amber-400 text-slate-900', borde: 'border-amber-400' },
+  atrasado:  { txt: '❗ ATRASADO',  caja: 'bg-red-600 text-white', borde: 'border-red-500' }
+};
+
+function pintarInquilinos() {
+  const p = periodoVista();
+  const orden = { atrasado: 0, pendiente: 1, pagado: 2 };
+  const lista = inquilinosDelMes(p)
+    .map(i => ({ i, e: estado(i, p) }))
+    .sort((a, b) => orden[a.e] - orden[b.e] || diaCorte(a.i, p) - diaCorte(b.i, p));
+
+  let html = `
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+      <button onclick="abrirPago()" class="bg-blue-600 hover:bg-blue-700 text-white rounded-3xl py-5 text-2xl font-extrabold shadow-lg">💵 Registrar un pago</button>
+      <button onclick="abrirInquilino()" class="bg-white hover:bg-slate-50 text-blue-700 border-4 border-blue-600 rounded-3xl py-4 text-xl font-bold shadow">➕ Agregar inquilino</button>
+    </div>`;
+
+  if (!lista.length) {
+    html += `<div class="bg-white rounded-3xl p-8 text-center shadow">
+      <div class="text-6xl mb-3">👥</div>
+      <p class="text-xl font-semibold">Todavía no hay inquilinos.</p>
+      <p class="text-slate-600 mt-1">Toque <b>“Agregar inquilino”</b> para empezar.</p></div>`;
+  } else {
+    html += '<div class="space-y-4">' + lista.map(({ i, e }) => {
+      const st = ESTILO[e];
+      const pg = pagosDe(i.id, p);
+      const dia = diaCorte(i, p);
+      let detalle = '';
+      if (e === 'pagado') {
+        const bs = pg.reduce((a, x) => a + x.bs, 0), usd = pg.reduce((a, x) => a + x.usd, 0);
+        const partes = [];
+        if (usd) partes.push(`$ ${fmt(usd)}`);
+        if (bs) partes.push(`Bs ${fmt(bs)}`);
+        detalle = `<div class="text-green-700 font-semibold mt-1">Pagó ${partes.join(' + ')} el ${fechaCorta(pg[pg.length - 1].fecha)}</div>`;
+      } else if (p === periodoActual()) {
+        const d = dia - hoy.getDate();
+        detalle = d === 0 ? '<div class="text-amber-700 font-bold mt-1">⚠️ Le toca pagar HOY</div>'
+               : d > 0 ? `<div class="text-slate-600 mt-1">Faltan ${d} día${d > 1 ? 's' : ''} para su pago</div>`
+               : `<div class="text-red-600 font-bold mt-1">Lleva ${-d} día${d < -1 ? 's' : ''} de atraso</div>`;
+      } else if (e === 'atrasado') {
+        detalle = '<div class="text-red-600 font-bold mt-1">No pagó este mes</div>';
+      }
+      return `
+      <div class="bg-white rounded-3xl shadow p-4 border-l-8 ${st.borde}">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div class="min-w-0">
+            <div class="text-2xl font-extrabold break-words">${esc(i.nombre)}</div>
+            <div class="text-lg text-slate-700">🚪 Hab. <b>${esc(i.habitacion)}</b> · 📅 Paga el día <b>${dia}</b>${i.renta ? ` · <b>$ ${fmt(i.renta)}</b>` : ''}</div>
+            ${detalle}
+          </div>
+          <span class="${st.caja} rounded-2xl px-4 py-2 text-lg font-extrabold whitespace-nowrap">${st.txt}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mt-4">
+          ${e === 'pagado'
+            ? `<button onclick="abrirPago('${i.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl py-3 text-lg font-bold">➕ Otro pago</button>`
+            : `<button onclick="abrirPago('${i.id}')" class="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3 text-xl font-extrabold">💵 Cobrar</button>`}
+          <button onclick="abrirInquilino('${i.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl py-3 text-lg font-bold">✏️ Editar</button>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  }
+  $('contenido').innerHTML = html;
+}
+
+function pintarPagos() {
+  const p = periodoVista();
+  const pagos = S.pagos.filter(x => x.periodo === p).sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+  // Totales por cuenta
+  const porCuenta = {};
+  pagos.forEach(x => {
+    const k = x.cuentaId || 'ninguna';
+    porCuenta[k] = porCuenta[k] || { nombre: x.cuentaId === 'efectivo' ? '💵 Efectivo / otro' : (x.cuentaNombre || 'Sin indicar'), bs: 0, usd: 0, n: 0 };
+    porCuenta[k].bs += x.bs; porCuenta[k].usd += x.usd; porCuenta[k].n++;
+  });
+
+  let html = `<button onclick="abrirPago()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-3xl py-5 text-2xl font-extrabold shadow-lg mb-5">💵 Registrar un pago</button>`;
+
+  if (!pagos.length) {
+    html += `<div class="bg-white rounded-3xl p-8 text-center shadow"><div class="text-6xl mb-3">🧾</div>
+      <p class="text-xl font-semibold">No hay pagos en ${periodoTexto(p)}.</p></div>`;
+  } else {
+    html += `<h2 class="text-2xl font-extrabold mb-3">🏦 ¿Cuánto entró en cada cuenta?</h2>
+      <div class="bg-white rounded-3xl shadow divide-y-2 divide-slate-100 mb-6">` +
+      Object.values(porCuenta).map(c => `
+        <div class="p-4 flex flex-wrap justify-between gap-2">
+          <div class="font-bold text-lg">${esc(c.nombre)} <span class="text-slate-500 font-normal">(${c.n} pago${c.n > 1 ? 's' : ''})</span></div>
+          <div class="text-lg font-extrabold text-green-700">${c.bs ? 'Bs ' + fmt(c.bs) : ''}${c.bs && c.usd ? ' + ' : ''}${c.usd ? '$ ' + fmt(c.usd) : ''}</div>
+        </div>`).join('') + '</div>';
+
+    html += `<h2 class="text-2xl font-extrabold mb-3">🧾 Pagos de ${periodoTexto(p)}</h2><div class="space-y-3">` +
+      pagos.map(x => {
+        const inq = inquilinoPorId(x.inquilinoId);
+        const cuenta = x.cuentaId === 'efectivo' ? '💵 Efectivo / otro' : (x.cuentaNombre ? '🏦 ' + x.cuentaNombre : '');
+        return `
+        <div class="bg-white rounded-3xl shadow p-4 border-l-8 border-green-500">
+          <div class="flex flex-wrap justify-between gap-2">
+            <div>
+              <div class="text-xl font-extrabold">${esc(inq ? inq.nombre : x.inquilinoNombre)}</div>
+              <div class="text-slate-600">📅 ${fechaCorta(x.fecha)}${inq ? ` · Hab. ${esc(inq.habitacion)}` : ''}</div>
+            </div>
+            <div class="text-right">
+              ${x.usd ? `<div class="text-2xl font-extrabold text-green-700">$ ${fmt(x.usd)}</div>` : ''}
+              ${x.bs ? `<div class="text-2xl font-extrabold text-green-700">Bs ${fmt(x.bs)}</div>` : ''}
+            </div>
+          </div>
+          ${cuenta ? `<div class="mt-2 text-lg">${esc(cuenta)}</div>` : ''}
+          ${x.tasa ? `<div class="text-slate-600">Tasa: Bs ${fmt(x.tasa)} por $ · Total ≈ <b>$ ${fmt(x.usd + x.bs / x.tasa)}</b></div>` : ''}
+          ${x.nota ? `<div class="text-slate-600 italic mt-1">📝 ${esc(x.nota)}</div>` : ''}
+          <button onclick="borrarPago('${x.id}')" class="mt-3 text-red-600 font-bold text-lg underline">🗑️ Borrar este pago</button>
+        </div>`;
+      }).join('') + '</div>';
+  }
+  $('contenido').innerHTML = html;
+}
+
+function usosCuenta(id, p) { return S.pagos.filter(x => x.cuentaId === id && x.periodo === p).length; }
+
+function pintarCuentas() {
+  const p = periodoVista();
+  let html = `
+    <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-3xl shadow-lg p-5 mb-6 text-center">
+      <div class="text-xl font-bold mb-2">¿A qué Pago Móvil le digo que pague?</div>
+      <div id="sorteoResultado" class="bg-white/15 rounded-2xl p-4 min-h-[5rem] flex items-center justify-center text-2xl font-extrabold break-words">
+        ${S.cuentas.length ? 'Toque el botón 👇' : 'Primero agregue sus cuentas abajo'}
+      </div>
+      <button onclick="sortearGrande()" class="mt-4 w-full bg-white text-blue-700 rounded-2xl py-4 text-2xl font-extrabold hover:bg-blue-50">🎲 Sugerir Pago Móvil</button>
+      <div id="sorteoAcciones" class="mt-3"></div>
+    </div>
+
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-2xl font-extrabold">🏦 Mis cuentas de Pago Móvil</h2>
+    </div>`;
+
+  if (!S.cuentas.length) {
+    html += `<div class="bg-white rounded-3xl p-6 text-center shadow mb-4"><p class="text-xl">No hay cuentas registradas todavía.</p></div>`;
+  } else {
+    html += '<div class="space-y-3 mb-4">' + S.cuentas.map(c => `
+      <div class="bg-white rounded-3xl shadow p-4 border-l-8 border-blue-600">
+        <div class="text-xl font-extrabold">${esc(c.banco)}</div>
+        <div class="text-lg">📱 ${esc(c.telefono)}${c.cedula ? ` · 🪪 ${esc(c.cedula)}` : ''}</div>
+        ${c.titular ? `<div class="text-lg text-slate-700">👤 ${esc(c.titular)}</div>` : ''}
+        <div class="text-slate-600 mt-1">Usada <b>${usosCuenta(c.id, p)}</b> ${usosCuenta(c.id, p) === 1 ? 'vez' : 'veces'} en ${periodoTexto(p)}</div>
+        <div class="grid grid-cols-3 gap-2 mt-3">
+          <button onclick="copiarCuenta('${c.id}')" class="bg-slate-100 hover:bg-slate-200 rounded-2xl py-3 font-bold">📋 Copiar</button>
+          <button onclick="abrirCuenta('${c.id}')" class="bg-slate-100 hover:bg-slate-200 rounded-2xl py-3 font-bold">✏️ Editar</button>
+          <button onclick="borrarCuenta('${c.id}')" class="bg-red-50 hover:bg-red-100 text-red-700 rounded-2xl py-3 font-bold">🗑️ Borrar</button>
+        </div>
+      </div>`).join('') + '</div>';
+  }
+  html += `<button onclick="abrirCuenta()" class="w-full bg-white hover:bg-slate-50 text-blue-700 border-4 border-blue-600 rounded-3xl py-4 text-xl font-bold shadow mb-8">➕ Agregar cuenta de Pago Móvil</button>
+
+    <div class="bg-white rounded-3xl shadow p-5">
+      <h2 class="text-xl font-extrabold mb-1">💾 Copia de seguridad</h2>
+      <p class="text-slate-600 mb-3">Los datos se guardan solo en este teléfono o computadora. Descargue una copia de vez en cuando para no perderlos.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button onclick="descargarCopia()" class="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3 text-lg font-bold">⬇️ Descargar copia</button>
+        <label class="bg-slate-100 hover:bg-slate-200 rounded-2xl py-3 text-lg font-bold text-center cursor-pointer">⬆️ Restaurar copia
+          <input type="file" accept=".json,application/json" class="hidden" onchange="restaurarCopia(this)"></label>
+      </div>
+    </div>`;
+  $('contenido').innerHTML = html;
+}
+
+/* =========================================================
+   NAVEGACIÓN
+   ========================================================= */
+function irTab(t) { tab = t; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function cambiarMes(d) { const f = new Date(vista.y, vista.m + d, 1); vista = { y: f.getFullYear(), m: f.getMonth() }; render(); }
+function irMesActual() { vista = { y: hoy.getFullYear(), m: hoy.getMonth() }; render(); }
+
+/* =========================================================
+   VENTANAS, AVISOS Y CONFIRMACIÓN
+   ========================================================= */
+function abrirModal(titulo, cuerpo) {
+  const m = $('modal');
+  m.innerHTML = `
+    <div class="min-h-full flex items-start sm:items-center justify-center p-3 sm:p-6">
+      <div class="pop bg-slate-50 rounded-3xl shadow-2xl w-full max-w-xl">
+        <div class="flex items-center justify-between bg-white rounded-t-3xl px-5 py-4 border-b-2 border-slate-200 sticky top-0">
+          <h2 class="text-2xl font-extrabold">${titulo}</h2>
+          <button onclick="cerrarModal()" class="bg-slate-200 hover:bg-slate-300 rounded-2xl w-12 h-12 text-2xl font-bold" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="p-5 space-y-5">${cuerpo}</div>
+      </div>
+    </div>`;
+  m.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function cerrarModal() { $('modal').classList.add('hidden'); $('modal').innerHTML = ''; document.body.style.overflow = ''; }
+
+let avisoTimer;
+function aviso(texto, color = 'verde') {
+  const t = $('toast');
+  const c = color === 'rojo' ? 'bg-red-600' : color === 'azul' ? 'bg-blue-600' : 'bg-green-600';
+  t.innerHTML = `<div class="pop ${c} text-white text-xl font-bold rounded-2xl shadow-2xl px-6 py-4 max-w-lg text-center">${texto}</div>`;
+  t.classList.remove('hidden');
+  clearTimeout(avisoTimer);
+  avisoTimer = setTimeout(() => t.classList.add('hidden'), 3000);
+}
+
+function preguntar(texto, siTexto = 'Sí, borrar') {
+  return new Promise(res => {
+    const c = $('confirmar');
+    c.innerHTML = `
+      <div class="pop bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md text-center">
+        <div class="text-5xl mb-3">⚠️</div>
+        <p class="text-xl font-semibold mb-6">${texto}</p>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="cNo" class="bg-slate-200 hover:bg-slate-300 rounded-2xl py-4 text-xl font-bold">No</button>
+          <button id="cSi" class="bg-red-600 hover:bg-red-700 text-white rounded-2xl py-4 text-xl font-bold">${siTexto}</button>
+        </div>
+      </div>`;
+    c.classList.remove('hidden');
+    const fin = r => { c.classList.add('hidden'); c.innerHTML = ''; res(r); };
+    $('cNo').onclick = () => fin(false);
+    $('cSi').onclick = () => fin(true);
+  });
+}
+
+/* =========================================================
+   INQUILINOS
+   ========================================================= */
+function abrirInquilino(id) {
+  const i = id ? inquilinoPorId(id) : null;
+  const dias = Array.from({ length: 31 }, (_, k) => k + 1)
+    .map(d => `<option value="${d}" ${(i ? Number(i.diaPago) : 1) === d ? 'selected' : ''}>Día ${d}</option>`).join('');
+  abrirModal(i ? '✏️ Editar inquilino' : '➕ Nuevo inquilino', `
+    <div><label class="etq" for="iq-nombre">Nombre del inquilino *</label>
+      <input id="iq-nombre" class="campo" value="${esc(i?.nombre)}" placeholder="Ej: María Pérez" autocomplete="off"></div>
+    <div class="grid grid-cols-2 gap-3">
+      <div><label class="etq" for="iq-hab">Habitación / anexo *</label>
+        <input id="iq-hab" class="campo" value="${esc(i?.habitacion)}" placeholder="Ej: 3 o Anexo A" autocomplete="off"></div>
+      <div><label class="etq" for="iq-dia">Día de pago *</label>
+        <select id="iq-dia" class="campo">${dias}</select></div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div><label class="etq" for="iq-renta">Mensualidad en $ <span class="font-normal text-slate-500">(opcional)</span></label>
+        <input id="iq-renta" class="campo" inputmode="decimal" value="${i?.renta ? esc(String(i.renta).replace('.', ',')) : ''}" placeholder="Ej: 80"></div>
+      <div><label class="etq" for="iq-tel">Teléfono <span class="font-normal text-slate-500">(opcional)</span></label>
+        <input id="iq-tel" class="campo" inputmode="tel" value="${esc(i?.telefono)}" placeholder="0414-1234567"></div>
+    </div>
+    <button onclick="guardarInquilino('${i ? i.id : ''}')" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-2xl py-5 text-2xl font-extrabold">💾 Guardar</button>
+    ${i ? `<button onclick="borrarInquilino('${i.id}')" class="w-full bg-white border-2 border-red-500 text-red-600 rounded-2xl py-3 text-lg font-bold">🗑️ Borrar este inquilino</button>` : ''}
+  `);
+  if (!i) setTimeout(() => $('iq-nombre').focus(), 50);
+}
+
+function guardarInquilino(id) {
+  const nombre = val('iq-nombre'), habitacion = val('iq-hab');
+  if (!nombre) return aviso('Escriba el nombre del inquilino', 'rojo');
+  if (!habitacion) return aviso('Escriba la habitación', 'rojo');
+  const datos = { nombre, habitacion, diaPago: Number(val('iq-dia')) || 1, renta: num(val('iq-renta')), telefono: val('iq-tel') };
+  if (id) Object.assign(inquilinoPorId(id), datos);
+  else S.inquilinos.push({ id: uid(), desde: periodoVista() < periodoActual() ? periodoVista() : periodoActual(), ...datos });
+  guardar(); cerrarModal(); render();
+  aviso(id ? '✅ Cambios guardados' : '✅ Inquilino agregado');
+}
+
+async function borrarInquilino(id) {
+  const i = inquilinoPorId(id);
+  if (!await preguntar(`¿Seguro que quiere borrar a <b>${esc(i.nombre)}</b>?<br><span class="text-base text-slate-500">Sus pagos anteriores se conservan en el historial.</span>`)) return;
+  S.inquilinos = S.inquilinos.filter(x => x.id !== id);
+  guardar(); cerrarModal(); render(); aviso('Inquilino borrado', 'azul');
+}
+
+/* =========================================================
+   PAGOS
+   ========================================================= */
+function abrirPago(inqId) {
+  if (!S.inquilinos.length) { aviso('Primero agregue un inquilino', 'rojo'); return; }
+  pagoSel.cuentaId = null;
+  const p = periodoVista();
+  // Si no se indica, sugerir el primer inquilino que no ha pagado
+  if (!inqId) { const f = inquilinosDelMes(p).find(i => estado(i, p) !== 'pagado'); inqId = f ? f.id : S.inquilinos[0].id; }
+  const opts = S.inquilinos.map(i => `<option value="${i.id}" ${i.id === inqId ? 'selected' : ''}>${esc(i.nombre)} — Hab. ${esc(i.habitacion)}</option>`).join('');
+
+  abrirModal('💵 Registrar pago', `
+    <div><label class="etq" for="pg-inq">¿Quién pagó?</label>
+      <select id="pg-inq" class="campo" onchange="calcularTotal()">${opts}</select></div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div><label class="etq" for="pg-mes">Mes que paga</label>
+        <input id="pg-mes" type="month" class="campo" value="${p}"></div>
+      <div><label class="etq" for="pg-fecha">Fecha del pago</label>
+        <input id="pg-fecha" type="date" class="campo" value="${hoyISO()}"></div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 border-2 border-slate-200 space-y-4">
+      <div><label class="etq" for="pg-usd">💵 Monto en DÓLARES ($)</label>
+        <input id="pg-usd" class="campo text-2xl font-bold" inputmode="decimal" placeholder="0" oninput="calcularTotal()"></div>
+      <div><label class="etq" for="pg-bs">🇻🇪 Monto en BOLÍVARES (Bs)</label>
+        <input id="pg-bs" class="campo text-2xl font-bold" inputmode="decimal" placeholder="0" oninput="calcularTotal(); pintarCuentasPago()"></div>
+      <div><label class="etq" for="pg-tasa">Tasa del dólar de hoy <span class="font-normal text-slate-500">(opcional)</span></label>
+        <input id="pg-tasa" class="campo" inputmode="decimal" placeholder="Ej: 245,50" value="${esc(S.ultimaTasa)}" oninput="calcularTotal()">
+        <p class="text-slate-500 text-base mt-1">Bs por cada dólar. Sirve para ver el total equivalente.</p></div>
+      <div id="pg-total" class="rounded-2xl bg-blue-50 border-2 border-blue-200 p-4 text-lg"></div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <span class="etq mb-0">🏦 ¿A qué cuenta llegó?</span>
+      </div>
+      <button onclick="sortearEnPago()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl py-4 text-xl font-extrabold mb-3">🎲 Sugerir Pago Móvil</button>
+      <div id="pg-cuentas" class="space-y-2"></div>
+      <div id="pg-cuentaDetalle" class="mt-3"></div>
+    </div>
+
+    <div><label class="etq" for="pg-nota">Nota <span class="font-normal text-slate-500">(opcional)</span></label>
+      <input id="pg-nota" class="campo" placeholder="Ej: Referencia 1234, pagó la mitad..." autocomplete="off"></div>
+
+    <button onclick="guardarPago()" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-2xl py-5 text-2xl font-extrabold">✅ Guardar pago</button>
+    <button onclick="cerrarModal()" class="w-full bg-slate-200 hover:bg-slate-300 rounded-2xl py-3 text-lg font-bold">Cancelar</button>
+  `);
+  pintarCuentasPago();
+  calcularTotal();
+}
+
+function calcularTotal() {
+  const bs = num(val('pg-bs')), usd = num(val('pg-usd')), tasa = num(val('pg-tasa'));
+  const inq = inquilinoPorId(val('pg-inq'));
+  let h = '';
+  if (!bs && !usd) {
+    h = '<span class="text-slate-600">Escriba cuánto pagó en $ y/o en Bs.</span>';
+  } else {
+    h = `<div>Recibido: <b>${[usd ? '$ ' + fmt(usd) : '', bs ? 'Bs ' + fmt(bs) : ''].filter(Boolean).join(' + ')}</b></div>`;
+    let totUsd = null;
+    if (tasa) {
+      totUsd = usd + bs / tasa;
+      h += `<div class="text-xl mt-1">Total equivalente: <b class="text-blue-800">$ ${fmt(totUsd)}</b></div>
+            <div>En bolívares: <b>Bs ${fmt(bs + usd * tasa)}</b></div>`;
+    } else if (!bs) {
+      totUsd = usd;
+    } else {
+      h += '<div class="text-slate-500 text-base mt-1">Escriba la tasa para ver el total en dólares.</div>';
+    }
+    if (inq && inq.renta && totUsd !== null) {
+      const dif = totUsd - inq.renta;
+      h += Math.abs(dif) < 0.01 ? `<div class="mt-2 font-bold text-green-700">✅ Pagó completo ($ ${fmt(inq.renta)})</div>`
+         : dif < 0 ? `<div class="mt-2 font-bold text-red-600">Le faltan $ ${fmt(-dif)} de su mensualidad ($ ${fmt(inq.renta)})</div>`
+         : `<div class="mt-2 font-bold text-green-700">Pagó $ ${fmt(dif)} de más (mensualidad $ ${fmt(inq.renta)})</div>`;
+    }
+  }
+  $('pg-total').innerHTML = h;
+}
+
+function pintarCuentasPago() {
+  const cont = $('pg-cuentas'); if (!cont) return;
+  const p = val('pg-mes') || periodoVista();
+  if (!S.cuentas.length) {
+    cont.innerHTML = `<div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 text-lg">No tiene cuentas de Pago Móvil registradas. Puede agregarlas en la pestaña <b>🏦 Pago Móvil</b>.</div>`;
+  }
+  const opcion = (id, titulo, sub) => {
+    const on = pagoSel.cuentaId === id;
+    return `<button onclick="elegirCuenta('${id}')" class="w-full text-left rounded-2xl p-4 border-4 ${on ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-white hover:border-slate-300'}">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">${on ? '🔵' : '⚪'}</span>
+        <div class="min-w-0"><div class="text-lg font-extrabold break-words">${titulo}</div>${sub ? `<div class="text-slate-600">${sub}</div>` : ''}</div>
+      </div></button>`;
+  };
+  cont.innerHTML = (S.cuentas.length ? '' : cont.innerHTML) +
+    S.cuentas.map(c => opcion(c.id, esc(c.banco), `📱 ${esc(c.telefono)} · usada ${usosCuenta(c.id, p)} vez/veces este mes`)).join('') +
+    opcion('efectivo', '💵 Efectivo / otro medio', 'Dólares en mano, Zelle, etc.');
+
+  const det = $('pg-cuentaDetalle');
+  const c = cuentaPorId(pagoSel.cuentaId);
+  det.innerHTML = c ? tarjetaCuenta(c, val('pg-inq')) : '';
+}
+
+function elegirCuenta(id) { pagoSel.cuentaId = id; pintarCuentasPago(); }
+
+function guardarPago() {
+  const inqId = val('pg-inq');
+  const inq = inquilinoPorId(inqId);
+  const bs = num(val('pg-bs')), usd = num(val('pg-usd')), tasa = num(val('pg-tasa'));
+  if (!inq) return aviso('Elija quién pagó', 'rojo');
+  if (!bs && !usd) return aviso('Escriba cuánto pagó (en $ o en Bs)', 'rojo');
+  if (bs && S.cuentas.length && !pagoSel.cuentaId) return aviso('Toque la cuenta donde llegó el pago', 'rojo');
+  const periodo = val('pg-mes') || periodoVista();
+  const f = val('pg-fecha');
+  const fecha = f ? new Date(f + 'T12:00:00').toISOString() : new Date().toISOString();
+  const c = cuentaPorId(pagoSel.cuentaId);
+  S.pagos.push({
+    id: uid(), inquilinoId: inqId, inquilinoNombre: inq.nombre, periodo, fecha, bs, usd, tasa,
+    cuentaId: pagoSel.cuentaId, cuentaNombre: c ? nombreCuenta(c) : '', nota: val('pg-nota')
+  });
+  if (tasa) S.ultimaTasa = val('pg-tasa');
+  if (c) S.ultimaCuentaId = c.id;
+  guardar(); cerrarModal(); render();
+  aviso(`✅ Pago de ${esc(inq.nombre)} guardado`);
+}
+
+async function borrarPago(id) {
+  const x = S.pagos.find(p => p.id === id);
+  if (!await preguntar(`¿Borrar el pago de <b>${esc(x.inquilinoNombre)}</b> del ${fechaCorta(x.fecha)}?`)) return;
+  S.pagos = S.pagos.filter(p => p.id !== id);
+  guardar(); render(); aviso('Pago borrado', 'azul');
+}
+
+/* =========================================================
+   CUENTAS DE PAGO MÓVIL
+   ========================================================= */
+function abrirCuenta(id) {
+  const c = id ? cuentaPorId(id) : null;
+  abrirModal(c ? '✏️ Editar cuenta' : '➕ Nueva cuenta de Pago Móvil', `
+    <div><label class="etq" for="ct-banco">Banco *</label>
+      <input id="ct-banco" class="campo" list="listaBancos" value="${esc(c?.banco)}" placeholder="Escriba o elija el banco" autocomplete="off">
+      <datalist id="listaBancos">${BANCOS.map(b => `<option value="${esc(b)}">`).join('')}</datalist></div>
+    <div><label class="etq" for="ct-tel">Teléfono del Pago Móvil *</label>
+      <input id="ct-tel" class="campo" inputmode="tel" value="${esc(c?.telefono)}" placeholder="0414-1234567"></div>
+    <div><label class="etq" for="ct-ci">Cédula / RIF</label>
+      <input id="ct-ci" class="campo" value="${esc(c?.cedula)}" placeholder="V-12345678"></div>
+    <div><label class="etq" for="ct-tit">Titular <span class="font-normal text-slate-500">(opcional)</span></label>
+      <input id="ct-tit" class="campo" value="${esc(c?.titular)}" placeholder="Nombre de quien recibe"></div>
+    <button onclick="guardarCuenta('${c ? c.id : ''}')" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-2xl py-5 text-2xl font-extrabold">💾 Guardar cuenta</button>
+  `);
+}
+
+function guardarCuenta(id) {
+  const banco = val('ct-banco'), telefono = val('ct-tel');
+  if (!banco) return aviso('Escriba el banco', 'rojo');
+  if (!telefono) return aviso('Escriba el teléfono', 'rojo');
+  const datos = { banco, telefono, cedula: val('ct-ci'), titular: val('ct-tit') };
+  if (id) Object.assign(cuentaPorId(id), datos); else S.cuentas.push({ id: uid(), ...datos });
+  guardar(); cerrarModal(); render(); aviso('✅ Cuenta guardada');
+}
+
+async function borrarCuenta(id) {
+  const c = cuentaPorId(id);
+  if (!await preguntar(`¿Borrar la cuenta <b>${esc(nombreCuenta(c))}</b>?<br><span class="text-base text-slate-500">Los pagos ya registrados se conservan.</span>`)) return;
+  S.cuentas = S.cuentas.filter(x => x.id !== id);
+  guardar(); render(); aviso('Cuenta borrada', 'azul');
+}
+
+function textoCuenta(c) {
+  return `Datos para Pago Móvil:\nBanco: ${c.banco}\nTeléfono: ${c.telefono}` +
+    (c.cedula ? `\nCédula: ${c.cedula}` : '') + (c.titular ? `\nTitular: ${c.titular}` : '');
+}
+
+function tarjetaCuenta(c, inqId) {
+  const inq = inqId ? inquilinoPorId(inqId) : null;
+  let tel = inq && inq.telefono ? inq.telefono.replace(/\D/g, '') : '';
+  if (tel.startsWith('0')) tel = '58' + tel.slice(1);
+  const wa = `https://wa.me/${tel}?text=${encodeURIComponent(textoCuenta(c))}`;
+  return `
+    <div class="bg-white text-slate-900 rounded-2xl border-4 border-indigo-500 p-4 text-left pop">
+      <div class="text-indigo-700 font-extrabold text-lg">👉 Cobrar a esta cuenta:</div>
+      <div class="text-2xl font-extrabold break-words">${esc(c.banco)}</div>
+      <div class="text-xl">📱 ${esc(c.telefono)}</div>
+      ${c.cedula ? `<div class="text-xl">🪪 ${esc(c.cedula)}</div>` : ''}
+      ${c.titular ? `<div class="text-lg text-slate-700">👤 ${esc(c.titular)}</div>` : ''}
+      <div class="grid grid-cols-2 gap-2 mt-3">
+        <button onclick="copiarCuenta('${c.id}')" class="bg-slate-100 hover:bg-slate-200 rounded-2xl py-3 text-lg font-bold">📋 Copiar datos</button>
+        <a href="${wa}" target="_blank" rel="noopener" class="bg-green-600 hover:bg-green-700 text-white rounded-2xl py-3 text-lg font-bold text-center">💬 WhatsApp</a>
+      </div>
+    </div>`;
+}
+
+async function copiarCuenta(id) {
+  const t = textoCuenta(cuentaPorId(id));
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) {
+    const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+    try { document.execCommand('copy'); } catch (_) {} a.remove();
+  }
+  aviso('📋 Datos copiados. Péguelos en el mensaje.', 'azul');
+}
+
+/* ---------- Sorteo / rotación equitativa ----------
+   Elige la cuenta que MENOS pagos ha recibido en el mes.
+   Si hay empate, evita la última usada y sortea entre las demás. */
+function sugerirCuenta(p) {
+  if (!S.cuentas.length) return null;
+  const usos = S.cuentas.map(c => ({ c, n: usosCuenta(c.id, p) }));
+  const min = Math.min(...usos.map(u => u.n));
+  let cand = usos.filter(u => u.n === min);
+  if (cand.length > 1) { const f = cand.filter(u => u.c.id !== S.ultimaCuentaId); if (f.length) cand = f; }
+  return cand[Math.floor(Math.random() * cand.length)].c;
+}
+
+function animarSorteo(caja, alTerminar) {
+  const nombres = S.cuentas.map(c => c.banco);
+  let k = 0;
+  const t = setInterval(() => {
+    caja.innerHTML = `<span class="dado">🎲</span>&nbsp;${esc(nombres[k++ % nombres.length])}`;
+  }, 110);
+  setTimeout(() => { clearInterval(t); alTerminar(); }, 1200);
+}
+
+function sortearGrande() {
+  if (!S.cuentas.length) { aviso('Primero agregue sus cuentas de Pago Móvil', 'rojo'); return; }
+  const caja = $('sorteoResultado');
+  $('sorteoAcciones').innerHTML = '';
+  animarSorteo(caja, () => {
+    const c = sugerirCuenta(periodoVista());
+    caja.innerHTML = `<div class="pop">🏦 ${esc(c.banco)}<div class="text-xl font-bold mt-1">📱 ${esc(c.telefono)}${c.cedula ? ' · ' + esc(c.cedula) : ''}</div></div>`;
+    $('sorteoAcciones').innerHTML = `
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="copiarCuenta('${c.id}')" class="bg-white/20 hover:bg-white/30 rounded-2xl py-3 text-lg font-bold">📋 Copiar datos</button>
+        <a href="https://wa.me/?text=${encodeURIComponent(textoCuenta(c))}" target="_blank" rel="noopener" class="bg-green-500 hover:bg-green-600 rounded-2xl py-3 text-lg font-bold">💬 WhatsApp</a>
+      </div>`;
+  });
+}
+
+function sortearEnPago() {
+  if (!S.cuentas.length) { aviso('Primero agregue sus cuentas en la pestaña Pago Móvil', 'rojo'); return; }
+  const det = $('pg-cuentaDetalle');
+  det.innerHTML = '<div class="bg-indigo-50 rounded-2xl p-4 text-xl font-extrabold text-center" id="pg-anim"></div>';
+  animarSorteo($('pg-anim'), () => {
+    const c = sugerirCuenta(val('pg-mes') || periodoVista());
+    pagoSel.cuentaId = c.id;
+    pintarCuentasPago();
+    aviso(`🎲 Use: ${esc(c.banco)}`, 'azul');
+  });
+}
+
+/* =========================================================
+   COPIA DE SEGURIDAD
+   ========================================================= */
+function descargarCopia() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ControlPension-copia-${hoyISO()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  aviso('⬇️ Copia descargada');
+}
+
+function restaurarCopia(input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!Array.isArray(d.inquilinos) || !Array.isArray(d.pagos)) throw 0;
+      if (!await preguntar('Esto reemplazará los datos actuales por los de la copia. ¿Continuar?', 'Sí, restaurar')) return;
+      S = Object.assign(VACIO(), d); guardar(); render(); aviso('✅ Copia restaurada');
+    } catch (e) { aviso('Ese archivo no es una copia válida', 'rojo'); }
+    input.value = '';
+  };
+  r.readAsText(f);
+}
+
+/* ========================================================= */
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modal').classList.contains('hidden')) cerrarModal(); });
+render();
+</script>
+</body>
+</html>

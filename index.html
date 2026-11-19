@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>casnoraGo - Gestión de Inquilinos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- BARRA SUPERIOR -->
+  <header class="bg-white border-b-2 border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 text-white text-2xl shadow-sm" aria-hidden="true">🏠</span>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">casnoraGo</h1>
+          <p class="text-base text-slate-600 font-medium">
+            Mes actual: <span id="currentMonthLabel" class="text-blue-700 font-bold capitalize"></span>
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button
+          type="button"
+          id="btnOpenPagoMovil"
+          class="tap-target flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border-2 border-blue-300 font-bold text-lg transition cursor-pointer"
+        >
+          <span aria-hidden="true">📱</span>
+          <span>Mis Pago Móvil</span>
+        </button>
+        <button
+          type="button"
+          id="btnOpenNewTenant"
+          class="tap-target flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-md transition cursor-pointer"
+        >
+          <span class="text-xl" aria-hidden="true">➕</span>
+          <span>Nuevo Inquilino</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 pt-6 space-y-6">
+
+    <!-- RESUMEN RÁPIDO SUPERIOR -->
+    <section aria-label="Resumen del mes">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Total Dólares -->
+        <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <p class="text-base font-bold text-emerald-900 uppercase tracking-wide">Recaudado en Dólares</p>
+            <span class="text-2xl" aria-hidden="true">💵</span>
+          </div>
+          <p id="totalUsdEl" class="text-3xl sm:text-4xl font-extrabold text-emerald-700 mt-2">$0.00</p>
+          <p class="text-sm text-emerald-800 mt-1 font-medium">Total cobrado este mes en $</p>
+        </div>
+
+        <!-- Total Bolívares -->
+        <div class="bg-blue-50 border-2 border-blue-300 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <p class="text-base font-bold text-blue-900 uppercase tracking-wide">Recaudado en Bolívares</p>
+            <span class="text-2xl" aria-hidden="true">🇻🇪</span>
+          </div>
+          <p id="totalBsEl" class="text-3xl sm:text-4xl font-extrabold text-blue-700 mt-2">Bs. 0,00</p>
+          <p class="text-sm text-blue-800 mt-1 font-medium">Total cobrado este mes en Bs</p>
+        </div>
+
+        <!-- Faltan por pagar -->
+        <div id="pendingSummaryCard" class="bg-red-50 border-2 border-red-300 rounded-2xl p-5 shadow-sm transition-colors">
+          <div class="flex items-center justify-between">
+            <p id="pendingSummaryTitle" class="text-base font-bold text-red-900 uppercase tracking-wide">Faltan por Pagar</p>
+            <span id="pendingSummaryIcon" class="text-2xl" aria-hidden="true">⏳</span>
+          </div>
+          <p id="pendingCountEl" class="text-3xl sm:text-4xl font-extrabold text-red-700 mt-2">0</p>
+          <p id="pendingSubtextEl" class="text-sm text-red-800 mt-1 font-medium">De 0 inquilinos registrados</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN DE PAGO MÓVIL Y SORTEO EQUITATIVO -->
+    <section aria-label="Gestión y sorteo de Pago Móvil" class="bg-white border-2 border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+        <div class="space-y-2 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-bold text-sm uppercase tracking-wide">
+              Pago Móvil para el cobro actual
+            </span>
+            <span id="pmUsageBadge" class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold text-sm"></span>
+          </div>
+
+          <div id="activePagoMovilBox" class="pt-1"></div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row lg:flex-col gap-3 lg:w-72">
+          <button
+            type="button"
+            id="btnSortearPM"
+            class="tap-target inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-md transition cursor-pointer"
+          >
+            <span id="diceIcon" aria-hidden="true">🎲</span>
+            <span>Sugerir / Sortear Pago Móvil</span>
+          </button>
+
+          <div class="flex flex-col gap-1">
+            <label for="pmQuickSelect" class="text-sm font-bold text-slate-600">O elegir otra cuenta manualmente:</label>
+            <select
+              id="pmQuickSelect"
+              class="tap-target w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 text-slate-900 font-semibold text-base"
+            ></select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FILTROS Y BÚSQUEDA DE INQUILINOS -->
+    <section aria-label="Lista de inquilinos" class="space-y-4">
+      <div class="bg-white border-2 border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex-1">
+          <label for="searchTenant" class="sr-only">Buscar inquilino o habitación</label>
+          <input
+            type="search"
+            id="searchTenant"
+            placeholder="🔍 Buscar por nombre o habitación..."
+            class="tap-target w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-lg font-medium placeholder:text-slate-400"
+          />
+        </div>
+
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
+          <button type="button" data-filter="todos" class="filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 transition cursor-pointer">
+            Todos
+          </button>
+          <button type="button" data-filter="pendientes" class="filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 transition cursor-pointer">
+            Faltan por pagar
+          </button>
+          <button type="button" data-filter="pagado" class="filter-btn tap-target px-4 py-2.5 rounded-xl font-bold text-base border-2 transition cursor-pointer">
+            Pagados
+          </button>
+        </div>
+      </div>
+
+      <!-- LISTA / TARJETAS DE INQUILINOS -->
+      <div id="tenantsList" class="space-y-4"></div>
+    </section>
+  </main>
+
+  <!-- MODAL: NUEVO / EDITAR INQUILINO -->
+  <div id="tenantModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="tenantModalTitle">
+    <div class="modal-animate bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border-2 border-slate-200 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <h2 id="tenantModalTitle" class="text-2xl font-extrabold text-slate-900">Nuevo Inquilino</h2>
+        <button type="button" id="btnCloseTenantModal" class="w-11 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xl cursor-pointer" aria-label="Cerrar">✕</button>
+      </div>
+
+      <form id="tenantForm" class="space-y-4">
+        <input type="hidden" id="tenantIdInput" />
+
+        <div>
+          <label for="tenantNameInput" class="block text-base font-bold text-slate-800 mb-1">Nombre completo del inquilino</label>
+          <input type="text" id="tenantNameInput" required placeholder="Ej: María Pérez" class="tap-target w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-lg font-medium" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="tenantRoomInput" class="block text-base font-bold text-slate-800 mb-1">Habitación o Anexo</label>
+            <input type="text" id="tenantRoomInput" required placeholder="Ej: Hab. 3 o Anexo B" class="tap-target w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-lg font-medium" />
+          </div>
+
+          <div>
+            <label for="tenantDayInput" class="block text-base font-bold text-slate-800 mb-1">Día de pago (1 al 31)</label>
+            <input type="number" id="tenantDayInput" required min="1" max="31" value="1" class="tap-target w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-lg font-bold text-center" />
+          </div>
+        </div>
+
+        <div>
+          <label for="tenantRentInput" class="block text-base font-bold text-slate-800 mb-1">Canon mensual acordado ($ opcional)</label>
+          <input type="number" id="tenantRentInput" step="0.01" min="0" placeholder="Ej: 80" class="tap-target w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-lg font-medium" />
+          <p class="text-sm text-slate-500 mt-1">Sirve como referencia al momento de cobrar.</p>
+        </div>
+
+        <div class="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+          <button type="button" id="btnCancelTenantModal" class="tap-target flex-1 px-5 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-lg cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" class="tap-target flex-1 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-md cursor-pointer">
+            Guardar Inquilino
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR PAGO MULTIDIVISA -->
+  <div id="paymentModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
+    <div class="modal-animate bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border-2 border-slate-200 space-y-5 my-6">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div>
+          <h2 id="paymentModalTitle" class="text-2xl font-extrabold text-slate-900">Registrar Pago</h2>
+          <p id="paymentTenantSubtitle" class="text-base font-semibold text-blue-700"></p>
+        </div>
+        <button type="button" id="btnClosePaymentModal" class="w-11 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xl cursor-pointer" aria-label="Cerrar">✕</button>
+      </div>
+
+      <form id="paymentForm" class="space-y-4">
+        <input type="hidden" id="paymentTenantId" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-3">
+            <label for="payUsdInput" class="block text-base font-bold text-emerald-900 mb-1">Monto en Dólares ($)</label>
+            <input type="number" id="payUsdInput" step="0.01" min="0" placeholder="0.00" class="tap-target w-full px-4 py-2.5 rounded-xl border-2 border-emerald-300 bg-white text-xl font-extrabold text-emerald-800" />
+          </div>
+
+          <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-3">
+            <label for="payBsInput" class="block text-base font-bold text-blue-900 mb-1">Monto en Bolívares (Bs)</label>
+            <input type="number" id="payBsInput" step="0.01" min="0" placeholder="0.00" class="tap-target w-full px-4 py-2.5 rounded-xl border-2 border-blue-300 bg-white text-xl font-extrabold text-blue-800" />
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 space-y-2">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <label for="payRateInput" class="text-base font-bold text-slate-800">Tasa del dólar del día (opcional, Bs/$)</label>
+            <input type="number" id="payRateInput" step="0.01" min="0" placeholder="Ej: 45.50" class="tap-target sm:w-44 px-4 py-2 rounded-xl border-2 border-slate-300 bg-white text-lg font-bold text-center" />
+          </div>
+          <p id="payEquivalentPreview" class="text-base font-bold text-slate-700 pt-1"></p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="payAccountSelect" class="block text-base font-bold text-slate-800">¿A qué cuenta / Pago Móvil cayó?</label>
+            <button type="button" id="btnPickSuggestedInModal" class="text-sm font-bold text-blue-700 underline cursor-pointer">Usar sugerida</button>
+          </div>
+          <select id="payAccountSelect" class="tap-target w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-lg font-semibold"></select>
+        </div>
+
+        <div>
+          <label for="payNoteInput" class="block text-base font-bold text-slate-800 mb-1">Nota o referencia (opcional)</label>
+          <input type="text" id="payNoteInput" placeholder="Ej: Ref. 4829 o pago en efectivo" class="tap-target w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-lg font-medium" />
+        </div>
+
+        <div class="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+          <button type="button" id="btnCancelPaymentModal" class="tap-target flex-1 px-5 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-lg cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" class="tap-target flex-1 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg shadow-md cursor-pointer">
+            ✅ Confirmar Pago
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: GESTIONAR CUENTAS PAGO MÓVIL -->
+  <div id="pagoMovilModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="pmModalTitle">
+    <div class="modal-animate bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border-2 border-slate-200 space-y-5 my-6">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <h2 id="pmModalTitle" class="text-2xl font-extrabold text-slate-900">Mis Cuentas Pago Móvil</h2>
+        <button type="button" id="btnClosePMModal" class="w-11 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xl cursor-pointer" aria-label="Cerrar">✕</button>
+      </div>
+
+      <form id="pagoMovilForm" class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 space-y-3">
+        <p class="text-base font-extrabold text-blue-900">Agregar nueva cuenta para cobrar</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="pmBankInput" class="block text-sm font-bold text-slate-800 mb-1">Banco</label>
+            <input type="text" id="pmBankInput" required placeholder="Ej: Banco Mercantil" class="tap-target w-full px-3 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-base font-medium" />
+          </div>
+          <div>
+            <label for="pmPhoneInput" class="block text-sm font-bold text-slate-800 mb-1">Teléfono</label>
+            <input type="tel" id="pmPhoneInput" required placeholder="Ej: 0414-1234567" class="tap-target w-full px-3 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-base font-medium" />
+          </div>
+          <div>
+            <label for="pmIdInput" class="block text-sm font-bold text-slate-800 mb-1">Cédula / RIF</label>
+            <input type="text" id="pmIdInput" required placeholder="Ej: V-12345678" class="tap-target w-full px-3 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-base font-medium" />
+          </div>
+          <div>
+            <label for="pmHolderInput" class="block text-sm font-bold text-slate-800 mb-1">Titular (opcional)</label>
+            <input type="text" id="pmHolderInput" placeholder="Ej: Sra. Carmen" class="tap-target w-full px-3 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-base font-medium" />
+          </div>
+        </div>
+        <button type="submit" class="tap-target w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-sm cursor-pointer">
+          ➕ Agregar Cuenta
+        </button>
+      </form>
+
+      <div class="space-y-2">
+        <h3 class="text-lg font-extrabold text-slate-800">Cuentas registradas</h3>
+        <div id="pagoMovilList" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button type="button" id="btnDonePMModal" class="tap-target px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-lg cursor-pointer">
+          Listo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AVISO FLOTANTE (TOAST) -->
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-6 py-3.5 rounded-2xl shadow-xl font-bold text-lg text-white"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

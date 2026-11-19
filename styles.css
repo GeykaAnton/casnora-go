@@ -1,0 +1,53 @@
+/* Estilos personalizados para casnoraGo (UX accesible para adultos mayores) */
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Foco muy visible para navegación y accesibilidad */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 4px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Áreas táctiles amplias para botones */
+.tap-target {
+  min-height: 48px;
+}
+
+/* Animación suave para modales */
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-animate {
+  animation: modalPop 0.18s ease-out;
+}
+
+/* Animación breve para el botón de sorteo de Pago Móvil */
+@keyframes diceRoll {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-14deg) scale(1.1); }
+  75% { transform: rotate(14deg) scale(1.1); }
+}
+
+.rolling {
+  display: inline-block;
+  animation: diceRoll 0.3s ease-in-out infinite;
+}
