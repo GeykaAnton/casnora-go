@@ -1,0 +1,25 @@
+{
+  "name": "casnoraGo - Gestión de Inquilinos",
+  "short_name": "casnoraGo",
+  "description": "Control de inquilinos, pagos multidivisa y Pago Móvil",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f3ed",
+  "theme_color": "#4a2e1b",
+  "orientation": "portrait-primary",
+  "lang": "es-VE",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
